@@ -114,9 +114,9 @@ function SearchField({ onSearchResult }) {
     map.on('geosearch/showlocation', (result) => {
       const location = {
         coordinates: { lat: result.location.y, lng: result.location.x },
-        address: 'Hamreheia 80, 4657 Kristiansand',
+        address: 'Hamreheia 80, 4631 Kristiansand',
         municipality: 'Kristiansand',
-        postcode: '4657',
+        postcode: '4631',
         isSearchResult: true
       };
       onSearchResult(location);
@@ -154,9 +154,9 @@ function MapClickHandler({ onLocationSelect }) {
       // Bruk alltid fast adresse uavhengig av klikk-posisjon
       const locationInfo = {
         coordinates: { lat, lng },
-        address: 'Hamreheia 80, 4657 Kristiansand',
+        address: 'Hamreheia 80, 4631 Kristiansand',
         municipality: 'Kristiansand',
-        postcode: '4657',
+        postcode: '4631',
         loading: false
       };
       
@@ -779,7 +779,7 @@ const MapComponent = () => {
                       className="pdf-btn primary"
                       onClick={() => window.open('https://api.arealplaner.no/api/kunder/kristiansand4204/dokumenter/16366/download/1407%20Reguleringsbestemmelser.PDF', '_blank')}
                     >
-                      Åpne reguleringsplanen for adressen
+                      Reguleringsplan for område/adressen
                     </button>
                   </div>
                   
