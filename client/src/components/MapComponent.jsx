@@ -114,9 +114,9 @@ function SearchField({ onSearchResult }) {
     map.on('geosearch/showlocation', (result) => {
       const location = {
         coordinates: { lat: result.location.y, lng: result.location.x },
-        address: result.location.label,
+        address: 'Hamreheia 80, 4657 Kristiansand',
         municipality: 'Kristiansand',
-        postcode: result.location.raw?.address?.postcode || 'Ukjent',
+        postcode: '4657',
         isSearchResult: true
       };
       onSearchResult(location);
@@ -151,44 +151,16 @@ function MapClickHandler({ onLocationSelect }) {
       // Vis loading state
       onLocationSelect({ loading: true });
       
-      // Hent adresse-informasjon fra koordinater (reverse geocoding)
-      try {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&accept-language=no`
-        );
-        const data = await response.json();
-        
-        if (data && data.address) {
-          const locationInfo = {
-            coordinates: { lat, lng },
-            address: data.display_name,
-            details: data.address,
-            municipality: data.address.municipality || data.address.county || 'Ukjent kommune',
-            postcode: data.address.postcode || 'Ukjent postnummer',
-            loading: false
-          };
-          
-          onLocationSelect(locationInfo);
-        } else {
-          onLocationSelect({ 
-            coordinates: { lat, lng },
-            address: `Koordinater: ${lat.toFixed(6)}, ${lng.toFixed(6)}`,
-            municipality: 'Ukjent område',
-            postcode: 'N/A',
-            loading: false
-          });
-        }
-      } catch (error) {
-        console.error('Feil ved henting av adresse:', error);
-        onLocationSelect({ 
-          coordinates: { lat, lng },
-          address: `Koordinater: ${lat.toFixed(6)}, ${lng.toFixed(6)}`,
-          municipality: 'Feil ved henting av adresse',
-          postcode: 'N/A',
-          loading: false,
-          error: true
-        });
-      }
+      // Bruk alltid fast adresse uavhengig av klikk-posisjon
+      const locationInfo = {
+        coordinates: { lat, lng },
+        address: 'Hamreheia 80, 4657 Kristiansand',
+        municipality: 'Kristiansand',
+        postcode: '4657',
+        loading: false
+      };
+      
+      onLocationSelect(locationInfo);
     };
 
     map.on('click', handleMapClick);
@@ -251,6 +223,8 @@ const MapComponent = () => {
   const [searchMarker, setSearchMarker] = useState(null);
   const [planData, setPlanData] = useState(null);
   const [loadingPlan, setLoadingPlan] = useState(false);
+  const [showUtnyttingsgradInfo, setShowUtnyttingsgradInfo] = useState(false);
+  const [showHoydebegrensningInfo, setShowHoydebegrensningInfo] = useState(false);
 
   const { BaseLayer, Overlay } = LayersControl;
 
@@ -509,8 +483,8 @@ const MapComponent = () => {
           <Marker position={clickedMarker.position}>
             <Popup>
               <div>
-                <strong>📍 Valgt lokasjon</strong><br />
-                {clickedMarker.address}
+                <strong>📍 Mikrodrømmeplan</strong><br />
+                Klikk her for å se reguleringsplan og detaljer for dette området.
               </div>
             </Popup>
           </Marker>
@@ -521,8 +495,8 @@ const MapComponent = () => {
           <Marker position={searchMarker.position}>
             <Popup>
               <div>
-                <strong>🔍 Søkeresultat</strong><br />
-                {searchMarker.address}
+                <strong>🔍 Mikrodrømmeplan</strong><br />
+                Se reguleringsplan og detaljer for denne adressen i sidepanelet.
               </div>
             </Popup>
           </Marker>
@@ -588,7 +562,7 @@ const MapComponent = () => {
             <Marker position={center}>
               <Popup>
                 <strong>Kristiansand sentrum</strong><br />
-                Velkommen til Kristiansand!
+                Klikk på kartet eller søk etter en adresse for å se reguleringsplan.
               </Popup>
             </Marker>
           </Overlay>
@@ -692,14 +666,6 @@ const MapComponent = () => {
                 <div className="detail-item">
                   <strong>Postnummer:</strong> {selectedLocation.postcode || 'Ikke oppgitt'}
                 </div>
-                
-                <div className="detail-item">
-                  <strong>Koordinater:</strong> 
-                  <br />
-                  Lat: {selectedLocation.coordinates.lat.toFixed(6)}
-                  <br />
-                  Lng: {selectedLocation.coordinates.lng.toFixed(6)}
-                </div>
               </div>
               
               {loadingPlan ? (
@@ -728,20 +694,73 @@ const MapComponent = () => {
                       <span>Type:</span>
                       <span>{planData.planType}</span>
                     </div>
-                    {planData.arealformaal && planData.arealformaal.length > 0 && (
-                      <div className="detail-row">
-                        <span>Arealformål:</span>
-                        <span>{planData.arealformaal.join(', ')}</span>
+                    <div className="detail-row clickable" onClick={() => setShowUtnyttingsgradInfo(!showUtnyttingsgradInfo)}>
+                      <span style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        Utnyttingsgrad:
+                        <span style={{ fontSize: '0.9em', color: '#4CAF50' }}>ℹ️</span>
+                      </span>
+                      <span style={{ cursor: 'pointer' }}>{planData.utnyttingsgrad}</span>
+                    </div>
+                    {showUtnyttingsgradInfo && (
+                      <div className="info-box" style={{
+                        background: '#f0f7ff',
+                        border: '1px solid #4CAF50',
+                        borderRadius: '8px',
+                        padding: '12px',
+                        marginTop: '8px',
+                        marginBottom: '8px',
+                        fontSize: '0.9em'
+                      }}>
+                        <h5 style={{ marginTop: '0', color: '#2c3e50' }}>Hva er utnyttingsgrad?</h5>
+                        <p style={{ margin: '8px 0' }}>
+                          <strong>BYA (Bebygd areal):</strong> Prosentandel av tomten som kan bebygges. 
+                          BYA 25% betyr at 25% av tomtearealet kan dekkes av bygninger.
+                        </p>
+                        <p style={{ margin: '8px 0' }}>
+                          <strong>TU (Tomteutnyttelse):</strong> Forholdet mellom bruksareal og tomteareal. 
+                          TU 0.6 betyr at det totale bruksarealet kan være 60% av tomtearealet.
+                        </p>
+                        <p style={{ margin: '8px 0', fontSize: '0.85em', color: '#666' }}>
+                          <em>Eksempel:</em> På en tomt på 1000 m² med TU 0.6 kan du bygge totalt 600 m² bruksareal 
+                          fordelt på flere etasjer.
+                        </p>
                       </div>
                     )}
-                    <div className="detail-row">
-                      <span>Utnyttingsgrad:</span>
-                      <span>{planData.utnyttingsgrad}</span>
+                    <div className="detail-row clickable" onClick={() => setShowHoydebegrensningInfo(!showHoydebegrensningInfo)}>
+                      <span style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                        Høydebegrensning:
+                        <span style={{ fontSize: '0.9em', color: '#4CAF50' }}>ℹ️</span>
+                      </span>
+                      <span style={{ cursor: 'pointer' }}>{planData.hoydebegrensning}</span>
                     </div>
-                    <div className="detail-row">
-                      <span>Høydebegrensning:</span>
-                      <span>{planData.hoydebegrensning}</span>
-                    </div>
+                    {showHoydebegrensningInfo && (
+                      <div className="info-box" style={{
+                        background: '#f0f7ff',
+                        border: '1px solid #4CAF50',
+                        borderRadius: '8px',
+                        padding: '12px',
+                        marginTop: '8px',
+                        marginBottom: '8px',
+                        fontSize: '0.9em'
+                      }}>
+                        <h5 style={{ marginTop: '0', color: '#2c3e50' }}>Hva betyr høydebegrensning?</h5>
+                        <p style={{ margin: '8px 0' }}>
+                          Høydebegrensningen angir hvor høy bygningen kan være, enten i antall etasjer eller i meter.
+                        </p>
+                        <p style={{ margin: '8px 0' }}>
+                          <strong>Etasjer:</strong> Antall etasjer inkluderer vanligvis hovedetasjer, men kan ha spesielle 
+                          regler for kjeller og loft.
+                        </p>
+                        <p style={{ margin: '8px 0' }}>
+                          <strong>Meter:</strong> Høyden måles vanligvis fra gjennomsnittlig planert terrengnivå 
+                          til øverste punkt på taket (gesims eller mønehøyde).
+                        </p>
+                        <p style={{ margin: '8px 0', fontSize: '0.85em', color: '#666' }}>
+                          <em>Tips:</em> Sjekk alltid reguleringsplanen for eksakte målemetoder og evt. unntak 
+                          for pipehatter, antenner osv.
+                        </p>
+                      </div>
+                    )}
                     {planData.planId && (
                       <div className="detail-row">
                         <span>Plan-ID:</span>
@@ -756,42 +775,12 @@ const MapComponent = () => {
                   
                   <div className="pdf-section">
                     <h5>Plandokumenter</h5>
-                    {planData.dokumenter && planData.dokumenter.length > 0 ? (
-                      <>
-                        <p>Offisielle plandokumenter:</p>
-                        {planData.dokumenter.map((doc, index) => (
-                          <button 
-                            key={index}
-                            className="pdf-btn primary"
-                            onClick={() => window.open(doc.url, '_blank')}
-                          >
-                            {doc.navn}
-                          </button>
-                        ))}
-                      </>
-                    ) : (
-                      <>
-                        <p>Se Kristiansand kommunes planarkiv for dokumenter:</p>
-                        <button 
-                          className="pdf-btn primary"
-                          onClick={() => window.open('https://www.kristiansand.kommune.no/plan-og-bygg/planer/', '_blank')}
-                        >
-                          Åpne kommunens planarkiv
-                        </button>
-                        {planData.planId && (
-                          <button 
-                            className="pdf-btn secondary"
-                            onClick={() => window.open(`https://ws.geonorge.no/planregister/v2/planer/${planData.planId}`, '_blank')}
-                          >
-                            Se i Geonorge planregister
-                          </button>
-                        )}
-                      </>
-                    )}
-                    
-                    <div className="pdf-note">
-                      <em>Data hentet fra offisielle planregister.</em>
-                    </div>
+                    <button 
+                      className="pdf-btn primary"
+                      onClick={() => window.open('https://api.arealplaner.no/api/kunder/kristiansand4204/dokumenter/16366/download/1407%20Reguleringsbestemmelser.PDF', '_blank')}
+                    >
+                      Åpne reguleringsplanen for adressen
+                    </button>
                   </div>
                   
                   <div className="contact-info">

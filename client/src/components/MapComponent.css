@@ -574,6 +574,18 @@
   border-bottom: 1px solid #e9ecef;
 }
 
+.detail-row.clickable {
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  padding: 8px 6px;
+  margin: 0 -6px;
+  border-radius: 4px;
+}
+
+.detail-row.clickable:hover {
+  background-color: #f0f7ff;
+}
+
 .detail-row:last-child {
   border-bottom: none;
 }
