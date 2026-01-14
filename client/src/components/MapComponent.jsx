@@ -99,13 +99,13 @@ function SearchField({ onSearchResult }) {
       provider,
       style: 'bar',
       position: 'topleft',
-      showMarker: false, // Vi håndterer markører selv
+      showMarker: false,
       showPopup: false,
       maxMarkers: 1,
       retainZoomLevel: false,
       animateZoom: true,
       autoClose: true,
-      searchLabel: '🔍 Søk i Kristiansand kommune...',
+      searchLabel: 'Søk etter adresse...',
       keepResult: true,
       autoCompleteDelay: 300,
     });
